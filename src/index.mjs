@@ -76,7 +76,7 @@ function createStateEvmmax(F) {
       // unclear what this should be
     }),
     storex: bind((_state) => {
-      // unclear what this should be
+      _state.gasCost += mulCost
     }),
     addmodx: bind((_state, ) => {
       _state.gasCost += addCost
