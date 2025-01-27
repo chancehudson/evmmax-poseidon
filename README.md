@@ -1,6 +1,6 @@
 # evmmax-poseidon
 
-This repo estimates the gas cost of implementing PoseidonT3 over the `alt_bn128` curve.
+This repo estimates the gas cost of implementing PoseidonT3 over the `alt_bn128` curve using [EIP-6690 (EVMMAX)](https://eips.ethereum.org/EIPS/eip-6690).
 
 ## Result
 
