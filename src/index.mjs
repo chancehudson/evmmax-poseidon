@@ -1,5 +1,5 @@
 import randomf, { random } from 'randomf'
-import { poseidonT3 } from './poseidon.mjs'
+import { poseidon } from './poseidon.mjs'
 
 export const altbn128 = BigInt(
   '0x30644e72e131a029b85045b68181585d2833e84879b9709143e1f593f0000001',
@@ -11,35 +11,47 @@ export const bls12381 = BigInt(
 
 export const m31 = BigInt(2n ** 31n - 1n)
 
+console.log('----')
 {
-  const { statex, ops } = createStateEvmmax(altbn128)
-  poseidonT3([0n, 0n], { statex, ops })
-  console.log(`EVMMAX impl consumed ${statex.gasCost} gas (alt_bn128)`)
+  const { statex, ops } = createState(altbn128)
+  poseidon(3, { statex, ops })
+  console.log(`alt_bn128 T3 consumed ${statex.gasCost} gas (normal)`)
 }
 
 {
-  const { statex, ops } = createState(altbn128)
-  poseidonT3([0n, 0n], { statex, ops })
-  console.log(`Normal impl (lazy reduction) consumed ${statex.gasCost} gas (alt_bn128)`)
+  const { statex, ops } = createStateEvmmax(altbn128)
+  poseidon(3, { statex, ops })
+  console.log(`alt_bn128 T3 consumed ${statex.gasCost} gas (EVMMAX)`)
+}
+
+console.log('----')
+
+{
+  const { statex, ops } = createState(m31)
+  poseidon(3, { statex, ops })
+  console.log(`m31 T3 consumed ${statex.gasCost} gas (normal)`)
 }
 
 {
   const { statex, ops } = createStateEvmmax(m31)
-  poseidonT3([0n, 0n], { statex, ops })
-  console.log(`EVMMAX impl consumed ${statex.gasCost} gas (m31)`)
+  poseidon(3, { statex, ops })
+  console.log(`m31 T3 consumed ${statex.gasCost} gas (EVMMAX)`)
 }
-
-{
-  const { statex, ops } = createState(m31, false)
-  poseidonT3([0n, 0n], { statex, ops })
-  console.log(`Normal impl consumed ${statex.gasCost} gas (m31)`)
-}
+console.log('----')
 
 {
   const { statex, ops } = createState(m31)
-  poseidonT3([0n, 0n], { statex, ops })
-  console.log(`Normal impl (lazy reduction) consumed ${statex.gasCost} gas (m31)`)
+  poseidon(8, { statex, ops })
+  console.log(`m31 T8 consumed ${statex.gasCost} gas (normal)`)
 }
+
+{
+  const { statex, ops } = createStateEvmmax(m31)
+  poseidon(8, { statex, ops })
+  console.log(`m31 T8 consumed ${statex.gasCost} gas (EVMMAX)`)
+}
+console.log('----')
+
 
 ///////
 export function log2floor(v) {
