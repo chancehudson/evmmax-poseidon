@@ -28,6 +28,20 @@ console.log('----')
 }
 
 console.log('----')
+{
+  const { statex, ops } = createState(altbn128)
+  poseidon(5, { statex, ops })
+  console.log(`alt_bn128 T5 consumed ${statex.gasCost} gas (normal)`)
+  console.log(`    stack: ${statex.gasCostStack}`)
+  console.log(`    arith: ${statex.gasCostArith}`)
+}
+
+{
+  const { statex, ops } = createStateEvmmax(altbn128)
+  poseidon(5, { statex, ops })
+  console.log(`alt_bn128 T5 consumed ${statex.gasCost} gas (EVMMAX)`)
+}
+console.log('----')
 
 {
   const { statex, ops } = createState(m31)
