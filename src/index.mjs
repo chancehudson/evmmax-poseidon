@@ -11,6 +11,7 @@ export const bls12381 = BigInt(
 
 export const m31 = BigInt(2n ** 31n - 1n)
 
+
 console.log('----')
 {
   const { statex, ops } = createState(altbn128)
@@ -54,7 +55,7 @@ console.log('----')
 
 
 ///////
-export function log2floor(v) {
+export function log2ceil(v) {
   if (typeof v !== 'bigint') throw new Error('log2 expected bigint')
   if (v < 0n) throw new Error('log2 received negative bigint')
   if (v === 0n) throw new Error('log2 received 0')
@@ -72,21 +73,21 @@ function createStateEvmmax(F) {
     gasCost: 0n,
   }
   let mulCost
-  if (log2floor(statex.mod) < 256n) {
+  if (log2ceil(statex.mod) < 256n) {
     mulCost = 1n
-  } else if (log2floor(statex.mod) < 384n) {
+  } else if (log2ceil(statex.mod) < 384n) {
     mulCost = 2n
-  } else if (log2floor(statex.mod) < 448n) {
+  } else if (log2ceil(statex.mod) < 448n) {
     mulCost = 3n
-  } else if (log2floor(statex.mod) < 512n) {
+  } else if (log2ceil(statex.mod) < 512n) {
     mulCost = 4n
   } else {
     throw new Error('modulus larger than 512 bits')
   }
   let addCost
-  if (log2floor(statex.mod) < 512n) {
+  if (log2ceil(statex.mod) < 512n) {
     addCost = 1n
-  } else if (log2floor(statex.mod) > 768n) {
+  } else if (log2ceil(statex.mod) > 768n) {
     addCost = 2n
   } else {
     throw new Error('modulus larger than 768 bits')
@@ -136,7 +137,7 @@ function createState(F, lazyReduction = true) {
     addmodx: bind((_state, lhs, rhs) => {
       // assuming addmod
       let out = lhs + rhs
-      const outBits = log2floor(out)
+      const outBits = log2ceil(out)
       if (outBits >= 256 || !lazyReduction) {
         /// simulate a mod call
         _state.gasCost += 8n
@@ -149,7 +150,7 @@ function createState(F, lazyReduction = true) {
     mulmodx: bind((_state, lhs, rhs) => {
       // assuming mulmod
       let out = lhs * rhs
-      const outBits = log2floor(out)
+      const outBits = log2ceil(out)
       if (outBits >= 256 || !lazyReduction) {
         /// simulate a mod call
         _state.gasCost += 8n
