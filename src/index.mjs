@@ -17,6 +17,8 @@ console.log('----')
   const { statex, ops } = createState(altbn128)
   poseidon(3, { statex, ops })
   console.log(`alt_bn128 T3 consumed ${statex.gasCost} gas (normal)`)
+  console.log(`    stack: ${statex.gasCostStack}`)
+  console.log(`    arith: ${statex.gasCostArith}`)
 }
 
 {
@@ -31,6 +33,8 @@ console.log('----')
   const { statex, ops } = createState(m31)
   poseidon(3, { statex, ops })
   console.log(`m31 T3 consumed ${statex.gasCost} gas (normal)`)
+  console.log(`    stack: ${statex.gasCostStack}`)
+  console.log(`    arith: ${statex.gasCostArith}`)
 }
 
 {
@@ -44,6 +48,8 @@ console.log('----')
   const { statex, ops } = createState(m31)
   poseidon(8, { statex, ops })
   console.log(`m31 T8 consumed ${statex.gasCost} gas (normal)`)
+  console.log(`    stack: ${statex.gasCostStack}`)
+  console.log(`    arith: ${statex.gasCostArith}`)
 }
 
 {
@@ -71,6 +77,8 @@ function createStateEvmmax(F) {
   const statex = {
     mod: BigInt(F),
     gasCost: 0n,
+    gasCostStack: 0n,
+    gasCostArith: 0n
   }
   let mulCost
   if (log2ceil(statex.mod) < 256n) {
@@ -104,7 +112,10 @@ function createStateEvmmax(F) {
     storex: bind((_state) => {
       _state.gasCost += mulCost
     }),
+    push: bind((_state) => { }),
+    dup: bind((_state) => { }),
     addmodx: bind((_state, ) => {
+      _state.gasCost += addCost
       _state.gasCost += addCost
       return randomf(F)
     }),
@@ -122,6 +133,8 @@ function createState(F, lazyReduction = true) {
   const statex = {
     mod: BigInt(F),
     gasCost: 0n,
+    gasCostStack: 0n,
+    gasCostArith: 0n
   }
   const bind = (fn) => (...args) => fn(statex, ...args)
   const ops = {
@@ -134,6 +147,14 @@ function createState(F, lazyReduction = true) {
     storex: bind((_state) => {
       // in non-evmmax impl this does not exist
     }),
+    push: bind((_state) => {
+      _state.gasCost += 3n
+      _state.gasCostStack += 3n
+    }),
+    dup: bind((_state) => {
+      _state.gasCost += 3n
+      _state.gasCostStack += 3n
+    }),
     addmodx: bind((_state, lhs, rhs) => {
       // assuming addmod
       let out = lhs + rhs
@@ -141,9 +162,15 @@ function createState(F, lazyReduction = true) {
       if (outBits >= 256 || !lazyReduction) {
         /// simulate a mod call
         _state.gasCost += 8n
+        _state.gasCostArith += 8n
         out %= _state.mod
+        // if we do a reduction we need to push the field constant
+        // to the top of the stack too
+        _state.gasCostStack += 3n
+        _state.gasCost += 3n
       } else {
         _state.gasCost += 3n
+        _state.gasCostArith += 3n
       }
       return out
     }),
@@ -154,9 +181,15 @@ function createState(F, lazyReduction = true) {
       if (outBits >= 256 || !lazyReduction) {
         /// simulate a mod call
         _state.gasCost += 8n
+        _state.gasCostArith += 8n
         out %= _state.mod
+        // if we do a reduction we need to push the field constant
+        // to the top of the stack too
+        _state.gasCostStack += 3n
+        _state.gasCost += 3n
       } else {
         _state.gasCost += 5n
+        _state.gasCostArith += 5n
       }
       return out
     }),

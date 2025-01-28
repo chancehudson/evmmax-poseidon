@@ -3,7 +3,7 @@ import { altbn128, bls12381, m31 } from "./index.mjs"
 // adapted from: https://github.com/chancehudson/poseidon-hash/blob/main/src/index.mjs
 
 export function poseidon(T, { statex, ops }) {
-  const { addmodx, add, mulmodx, loadx, storex } = ops
+  const { addmodx, mulmodx, push, dup, loadx, storex } = ops
 
   let N_ROUNDS_F, N_ROUNDS_P, C, M, F
   if (statex.mod === altbn128 && T === 3) {
@@ -49,8 +49,16 @@ export function poseidon(T, { statex, ops }) {
 
   // return v^5
   const pow5 = (v) => {
+    // assume we push the input arg
+    push()
+    // dup for the square
+    dup()
     const sq = mulmodx(v, v)
+    // dup for the quart
+    dup()
     const qu = mulmodx(sq, sq)
+    // swap/dup the input once more
+    dup()
     return mulmodx(v, qu)
   }
 
@@ -59,6 +67,7 @@ export function poseidon(T, { statex, ops }) {
     for (let x = 0; x < state.length; x++) {
       let o = 0n
       for (let y = 0; y < state.length; y++) {
+        push()
         o = addmodx(o, mulmodx(M[x][y], state[y]))
       }
       out.push(o)
@@ -74,6 +83,7 @@ export function poseidon(T, { statex, ops }) {
   let state = [0n, ...inputs]
   for (let x = 0; x < N_ROUNDS_F + N_ROUNDS_P; x++) {
     for (let y = 0; y < state.length; y++) {
+      push()
       state[y] = addmodx(state[y], C[x * T + y])
       if (x < N_ROUNDS_F / 2 || x >= N_ROUNDS_F / 2 + N_ROUNDS_P)
         state[y] = pow5(state[y])
