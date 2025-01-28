@@ -10,6 +10,10 @@ export function poseidon(T, { statex, ops }) {
     N_ROUNDS_F = 8
     N_ROUNDS_P = 57
     F = altbn128
+  } else if (statex.mod === altbn128 && T === 5) {
+      N_ROUNDS_F = 8
+      N_ROUNDS_P = 60
+      F = altbn128
   } else if (statex.mod === bls12381 && T === 3) {
     N_ROUNDS_F = 8
     N_ROUNDS_P = 56
