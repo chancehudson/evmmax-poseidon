@@ -1,13 +1,9 @@
 import randomf from 'randomf'
-import { altbn128, bls12381 } from "./index.mjs"
+import { altbn128, bls12381, m31 } from "./index.mjs"
 // adapted from: https://github.com/chancehudson/poseidon-hash/blob/main/src/index.mjs
 
 export function poseidonT3(_inputs, { statex, ops }) {
   const T = 3
-  const inputs = _inputs.map((i) => BigInt(i))
-  if (inputs.length !== T - 1) {
-    throw new Error('bad input length')
-  }
   const { addmodx, add, mulmodx, loadx, storex } = ops
 
   let N_ROUNDS_F, N_ROUNDS_P, C, M, F
@@ -19,22 +15,31 @@ export function poseidonT3(_inputs, { statex, ops }) {
     N_ROUNDS_F = 8
     N_ROUNDS_P = 56
     F = bls12381
+  } else if (statex.mod === m31) {
+    N_ROUNDS_F = 12
+    N_ROUNDS_P = 19
+    F = m31
   } else {
     throw new Error('unsupported modulus')
+  }
+
+  const inputs = _inputs.map(() => F - 1n)
+  if (inputs.length !== T - 1) {
+    throw new Error('bad input length')
   }
 
   // generate some random round constants, we're not planning to use
   // this as a real hash function
   //
   // T * (N_ROUNDS_F + N_ROUNDS_P)
-  C = Array(T * (N_ROUNDS_F + N_ROUNDS_P)).fill(0n).map(() => randomf(F))
+  C = Array(T * (N_ROUNDS_F + N_ROUNDS_P)).fill(0n).map(() => F - 1n)
   // assume we need to read each of these into monty repr at runtime?
   for (const v of C) {
     storex(v)
   }
 
   // generate a random TxT MDS matrix
-  M = Array(T).fill(0n).map(() => Array(T).fill(0n).map(() => randomf(F)))
+  M = Array(T).fill(0n).map(() => Array(T).fill(0n).map(() => F - 1n))
   // same with the mds matrix
   for (const v of M) {
     for (const vv of v) {
@@ -54,10 +59,7 @@ export function poseidonT3(_inputs, { statex, ops }) {
     for (let x = 0; x < state.length; x++) {
       let o = 0n
       for (let y = 0; y < state.length; y++) {
-        // in T3 specifically we can use add instead of addmod
-        // because we're doing 3 additions on 254 bit integers
-        // this yields a value that is < 2^256
-        o = add(o, mulmodx(M[x][y], state[y]))
+        o = addmodx(o, mulmodx(M[x][y], state[y]))
       }
       out.push(o)
     }
@@ -72,7 +74,7 @@ export function poseidonT3(_inputs, { statex, ops }) {
   let state = [0n, ...inputs]
   for (let x = 0; x < N_ROUNDS_F + N_ROUNDS_P; x++) {
     for (let y = 0; y < state.length; y++) {
-      state[y] = add(state[y], C[x * T + y])
+      state[y] = addmodx(state[y], C[x * T + y])
       if (x < N_ROUNDS_F / 2 || x >= N_ROUNDS_F / 2 + N_ROUNDS_P)
         state[y] = pow5(state[y])
       else if (y === 0) state[y] = pow5(state[y])

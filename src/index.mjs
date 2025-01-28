@@ -9,6 +9,8 @@ export const bls12381 = BigInt(
   '0x73eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000001',
 )
 
+export const m31 = BigInt(2n ** 31n - 1n)
+
 {
   const { statex, ops } = createStateEvmmax(altbn128)
   poseidonT3([0n, 0n], { statex, ops })
@@ -17,15 +19,26 @@ export const bls12381 = BigInt(
 
 {
   const { statex, ops } = createState(altbn128)
-  ops.add = ops.addmodx
   poseidonT3([0n, 0n], { statex, ops })
-  console.log(`Normal impl consumed ${statex.gasCost} gas (alt_bn128)`)
+  console.log(`Normal impl (lazy reduction) consumed ${statex.gasCost} gas (alt_bn128)`)
 }
 
 {
-  const { statex, ops } = createState(altbn128)
+  const { statex, ops } = createStateEvmmax(m31)
   poseidonT3([0n, 0n], { statex, ops })
-  console.log(`Normal impl (lazy reduction) consumed ${statex.gasCost} gas (alt_bn128)`)
+  console.log(`EVMMAX impl consumed ${statex.gasCost} gas (m31)`)
+}
+
+{
+  const { statex, ops } = createState(m31, false)
+  poseidonT3([0n, 0n], { statex, ops })
+  console.log(`Normal impl consumed ${statex.gasCost} gas (m31)`)
+}
+
+{
+  const { statex, ops } = createState(m31)
+  poseidonT3([0n, 0n], { statex, ops })
+  console.log(`Normal impl (lazy reduction) consumed ${statex.gasCost} gas (m31)`)
 }
 
 ///////
@@ -92,7 +105,7 @@ function createStateEvmmax(F) {
   return { statex, ops }
 }
 
-function createState(F) {
+function createState(F, lazyReduction = true) {
   const statex = {
     mod: BigInt(F),
     gasCost: 0n,
@@ -108,22 +121,31 @@ function createState(F) {
     storex: bind((_state) => {
       // in non-evmmax impl this does not exist
     }),
-    add: bind((_state) => {
-      // in some cases we can add without overflowing and defer
-      // the reduction to a future step
-      // see here: https://github.com/chancehudson/poseidon-solidity/blob/main/contracts/PoseidonT3.sol#L46
-      _state.gasCost += 3n
-      return randomf(F)
-    }),
-    addmodx: bind((_state) => {
+    addmodx: bind((_state, lhs, rhs) => {
       // assuming addmod
-      _state.gasCost += 8n
-      return randomf(F)
+      let out = lhs + rhs
+      const outBits = log2floor(out)
+      if (outBits >= 256 || !lazyReduction) {
+        /// simulate a mod call
+        _state.gasCost += 8n
+        out %= _state.mod
+      } else {
+        _state.gasCost += 3n
+      }
+      return out
     }),
-    mulmodx: bind((_state) => {
+    mulmodx: bind((_state, lhs, rhs) => {
       // assuming mulmod
-      _state.gasCost += 8n
-      return randomf(F)
+      let out = lhs * rhs
+      const outBits = log2floor(out)
+      if (outBits >= 256 || !lazyReduction) {
+        /// simulate a mod call
+        _state.gasCost += 8n
+        out %= _state.mod
+      } else {
+        _state.gasCost += 5n
+      }
+      return out
     }),
   }
   return { statex, ops }
