@@ -114,8 +114,7 @@ function createStateEvmmax(F) {
     }),
     push: bind((_state) => { }),
     dup: bind((_state) => { }),
-    addmodx: bind((_state, ) => {
-      _state.gasCost += addCost
+    addmodx: bind((_state) => {
       _state.gasCost += addCost
       return randomf(F)
     }),
