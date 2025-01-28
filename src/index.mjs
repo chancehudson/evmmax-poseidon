@@ -114,6 +114,8 @@ function createStateEvmmax(F) {
     }),
     push: bind((_state) => { }),
     dup: bind((_state) => { }),
+    pop: bind((_state) => { }),
+    swap: bind((_state) => { }),
     addmodx: bind((_state) => {
       _state.gasCost += addCost
       return randomf(F)
@@ -135,6 +137,10 @@ function createState(F, lazyReduction = true) {
     gasCostStack: 0n,
     gasCostArith: 0n
   }
+  const stackop = (cost) => bind((_state) => {
+    _state.gasCost += cost
+    _state.gasCostStack += cost
+  })
   const bind = (fn) => (...args) => fn(statex, ...args)
   const ops = {
     setmodx: bind((_state) => {
@@ -146,14 +152,10 @@ function createState(F, lazyReduction = true) {
     storex: bind((_state) => {
       // in non-evmmax impl this does not exist
     }),
-    push: bind((_state) => {
-      _state.gasCost += 3n
-      _state.gasCostStack += 3n
-    }),
-    dup: bind((_state) => {
-      _state.gasCost += 3n
-      _state.gasCostStack += 3n
-    }),
+    push: stackop(3n),
+    dup: stackop(3n),
+    pop: stackop(2n),
+    swap: stackop(3n),
     addmodx: bind((_state, lhs, rhs) => {
       // assuming addmod
       let out = lhs + rhs

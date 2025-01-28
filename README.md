@@ -10,18 +10,18 @@ EVMMAX arithmetic is ~5x cheaper than the best normal implementation. The expect
 
 ```
 ----
-alt_bn128 T3 consumed 15252 gas (normal)
-    stack: 5973
+alt_bn128 T3 consumed 19947 gas (normal)
+    stack: 10668
     arith: 9279
 alt_bn128 T3 consumed 1814 gas (EVMMAX)
 ----
-m31 T3 consumed 5628 gas (normal)
-    stack: 2034
+m31 T3 consumed 7949 gas (normal)
+    stack: 4355
     arith: 3594
 m31 T3 consumed 920 gas (EVMMAX)
 ----
-m31 T8 consumed 19743 gas (normal)
-    stack: 6396
+m31 T8 consumed 26344 gas (normal)
+    stack: 12997
     arith: 13347
 m31 T8 consumed 3326 gas (EVMMAX)
 ----
